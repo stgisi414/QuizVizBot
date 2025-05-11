@@ -107,8 +107,66 @@ function checkAnswer(selected, correct, element) {
 }
 
 async function requestVisualization() {
-  const botResponse = await getBotResponse("Create a D3.js visualization for the current topic", false);
-  addMessage(botResponse, false);
+  const promptTemplate = `Generate D3.js visualization data in the following JSON format:
+  {
+    "type": "bar|line|pie",
+    "title": "string",
+    "data": [
+      {"label": "string", "value": number}
+    ],
+    "xAxis": "string",
+    "yAxis": "string"
+  }`;
+  
+  const botResponse = await getBotResponse(promptTemplate, false);
+  try {
+    const vizData = JSON.parse(botResponse);
+    const vizContainer = document.createElement('div');
+    vizContainer.className = 'visualization-container';
+    
+    const width = 400;
+    const height = 300;
+    const margin = {top: 20, right: 20, bottom: 30, left: 40};
+    
+    const svg = d3.select(vizContainer)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height);
+    
+    if (vizData.type === 'bar') {
+      const x = d3.scaleBand()
+        .range([margin.left, width - margin.right])
+        .padding(0.1);
+        
+      const y = d3.scaleLinear()
+        .range([height - margin.bottom, margin.top]);
+        
+      x.domain(vizData.data.map(d => d.label));
+      y.domain([0, d3.max(vizData.data, d => d.value)]);
+      
+      svg.append('g')
+        .attr('transform', `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(x));
+        
+      svg.append('g')
+        .attr('transform', `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y));
+        
+      svg.selectAll('rect')
+        .data(vizData.data)
+        .enter()
+        .append('rect')
+        .attr('x', d => x(d.label))
+        .attr('y', d => y(d.value))
+        .attr('width', x.bandwidth())
+        .attr('height', d => height - margin.bottom - y(d.value))
+        .attr('fill', 'steelblue');
+    }
+    
+    addMessage(vizContainer.outerHTML, false, MessageTypes.DATA_VIZ);
+  } catch (error) {
+    addMessage("Sorry, there was an error generating the visualization.", false);
+  }
 }
 
 async function requestQuiz() {
