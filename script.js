@@ -6,24 +6,27 @@ const userInput = document.getElementById('user-input');
 // Load chat history from localStorage
 let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
 
+function displayMessages() {
+  messagesContainer.innerHTML = '';
+  chatHistory.forEach(msg => {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${msg.isUser ? 'user-message' : 'bot-message'}`;
+    messageDiv.textContent = msg.text;
+    messagesContainer.appendChild(messageDiv);
+  });
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
 // Display existing messages
-chatHistory.forEach(msg => {
-  addMessage(msg.text, msg.isUser);
-});
+displayMessages();
 
 function addMessage(message, isUser) {
-  const messageDiv = document.createElement('div');
-  messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-  messageDiv.textContent = message;
-  messagesContainer.appendChild(messageDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-  // Add to chat history
   chatHistory.push({ text: message, isUser });
   if (chatHistory.length > 10) {
     chatHistory.shift();
   }
   localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+  displayMessages();
 }
 
 async function getBotResponse(userMessage) {
