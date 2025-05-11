@@ -74,7 +74,7 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: messageWithContext }]
+          parts: [{ text: promptTemplate }]
         }]
       })
     });
