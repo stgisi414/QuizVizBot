@@ -1,5 +1,5 @@
 
-const API_KEY = process.env.GEMINI_API_KEY;
+const API_KEY = "AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA";
 const messagesContainer = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
 
@@ -12,15 +12,17 @@ function addMessage(message, isUser) {
 }
 
 async function getBotResponse(userMessage) {
+  const currentLocalDate = new Date().toLocaleString();
+  const userMessageWithDate = `${userMessage} ${currentLocalDate}`;
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{ text: userMessage }]
+          parts: [{ text: userMessageWithDate }]
         }]
       })
     });
