@@ -190,12 +190,6 @@ async function requestVisualization() {
     addMessage("Sorry, there was an error generating the visualization.", false);
   }
 }
-    
-    addMessage(vizContainer.outerHTML, false, MessageTypes.DATA_VIZ);
-  } catch (error) {
-    addMessage("Sorry, there was an error generating the visualization.", false);
-  }
-}
 
 async function requestQuiz() {
   const botResponse = await getBotResponse("Generate a quiz question for the current topic", false);
@@ -205,15 +199,6 @@ async function requestQuiz() {
   } catch (error) {
     addMessage("Sorry, there was an error generating the quiz.", false);
   }
-}
-
-function addMessage(message, isUser, type = 'text') {
-  chatHistory.push({ text: message, isUser, type });
-  if (chatHistory.length > 10) {
-    chatHistory.shift();
-  }
-  localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-  displayMessages();
 }
 
 // Initialize chat with welcome message
