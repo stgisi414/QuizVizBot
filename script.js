@@ -72,7 +72,19 @@ function displayMessages() {
         </div>
       `;
     } else {
-      messageDiv.textContent = msg.text;
+      const messageContent = document.createElement('div');
+      messageContent.textContent = msg.text;
+      messageDiv.appendChild(messageContent);
+      
+      if (!msg.isUser && messageType === MessageTypes.INSTRUCTIONAL) {
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'message-actions';
+        actionButtons.innerHTML = `
+          <button onclick="requestVisualization()" class="icon-button"><i class="fas fa-chart-bar"></i></button>
+          <button onclick="requestQuiz()" class="icon-button"><i class="fas fa-question-circle"></i></button>
+        `;
+        messageDiv.appendChild(actionButtons);
+      }
     }
     
     messagesContainer.appendChild(messageDiv);
