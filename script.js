@@ -3,8 +3,18 @@ const API_KEY = "AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA";
 const messagesContainer = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
 
-// Load chat history from localStorage
-let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+let chatHistory = [];
+let currentStep = 0;
+
+const surveyFlow = {
+  steps: [
+    { type: "name", required: true },
+    { type: "interests", required: true },
+    { type: "goals", required: true },
+    { type: "learning_style", required: true },
+    { type: "open", required: false }
+  ]
+};
 
 function displayMessages() {
   messagesContainer.innerHTML = '';
@@ -17,8 +27,13 @@ function displayMessages() {
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-// Display existing messages
-displayMessages();
+// Initialize chat with welcome message
+async function initializeChat() {
+  const welcomeMessage = await getBotResponse("", true);
+  addMessage(welcomeMessage, false);
+}
+
+initializeChat();
 
 function addMessage(message, isUser) {
   chatHistory.push({ text: message, isUser });
@@ -29,12 +44,28 @@ function addMessage(message, isUser) {
   displayMessages();
 }
 
-async function getBotResponse(userMessage) {
-  const currentLocalDate = new Date().toLocaleString();
+async function getBotResponse(userMessage, isFirstMessage = false) {
   const contextMessages = chatHistory.map(msg => 
     `${msg.isUser ? 'User' : 'Assistant'}: ${msg.text}`
   ).join('\n');
-  const messageWithContext = `Previous conversation:\n${contextMessages}\n\nUser: ${userMessage}\nCurrent time: ${currentLocalDate}`;
+
+  const currentStep = surveyFlow.steps[chatHistory.filter(msg => !msg.isUser).length] || { type: "open" };
+  
+  const promptTemplate = isFirstMessage ? 
+    `You are an educational AI assistant conducting a personalized learning journey. Provide a warm, engaging welcome message that introduces yourself and asks for the user's name. Keep it concise and friendly.` :
+    `You are an educational AI assistant guiding a learning journey.
+    Current step type: ${currentStep.type}
+    Previous conversation: ${contextMessages}
+    User message: ${userMessage}
+    
+    Based on the current step type (${currentStep.type}), provide a natural, encouraging response and guide the conversation according to these rules:
+    - If step is "name": Acknowledge their name and ask about their interests
+    - If step is "interests": Explore their mentioned interests and ask about their learning goals
+    - If step is "goals": Discuss their goals and ask about their preferred learning style
+    - If step is "learning_style": Acknowledge their style and open the conversation for any questions
+    - If step is "open": Engage in open discussion while maintaining educational focus
+    
+    Keep responses concise, friendly, and focused on education.`;
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${API_KEY}`, {
       method: 'POST',
@@ -68,8 +99,9 @@ async function sendMessage() {
 
 function resetChat() {
   chatHistory = [];
-  localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+  currentStep = 0;
   messagesContainer.innerHTML = '';
+  initializeChat();
 }
 
 userInput.addEventListener('keypress', (e) => {
