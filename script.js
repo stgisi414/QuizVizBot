@@ -76,7 +76,7 @@ function displayMessages() {
       messageContent.textContent = msg.text;
       messageDiv.appendChild(messageContent);
       
-      if (!msg.isUser && msg.type === MessageTypes.INSTRUCTIONAL) {
+      if (!msg.isUser && msg.type === MessageTypes.INSTRUCTIONAL && isOnboardingComplete) {
         const actionButtons = document.createElement('div');
         actionButtons.className = 'message-actions';
         actionButtons.innerHTML = `
