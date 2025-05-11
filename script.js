@@ -107,61 +107,89 @@ function checkAnswer(selected, correct, element) {
 }
 
 async function requestVisualization() {
-  const promptTemplate = `Generate D3.js visualization data in the following JSON format:
+  const promptTemplate = `Generate visualization data in this exact JSON format:
   {
-    "type": "bar|line|pie",
-    "title": "string",
+    "type": "bar",
+    "title": "Sample Data",
     "data": [
-      {"label": "string", "value": number}
+      {"label": "A", "value": 10},
+      {"label": "B", "value": 20}
     ],
-    "xAxis": "string",
-    "yAxis": "string"
+    "xAxis": "Categories",
+    "yAxis": "Values"
   }`;
   
   const botResponse = await getBotResponse(promptTemplate, false);
   try {
     const vizData = JSON.parse(botResponse);
-    const vizContainer = document.createElement('div');
-    vizContainer.className = 'visualization-container';
+    const container = document.createElement('div');
+    container.className = 'visualization-container';
     
     const width = 400;
     const height = 300;
-    const margin = {top: 20, right: 20, bottom: 30, left: 40};
+    const margin = {top: 40, right: 20, bottom: 60, left: 60};
     
-    const svg = d3.select(vizContainer)
+    const svg = d3.select(container)
       .append('svg')
       .attr('width', width)
       .attr('height', height);
     
-    if (vizData.type === 'bar') {
-      const x = d3.scaleBand()
-        .range([margin.left, width - margin.right])
-        .padding(0.1);
-        
-      const y = d3.scaleLinear()
-        .range([height - margin.bottom, margin.top]);
-        
-      x.domain(vizData.data.map(d => d.label));
-      y.domain([0, d3.max(vizData.data, d => d.value)]);
-      
-      svg.append('g')
-        .attr('transform', `translate(0,${height - margin.bottom})`)
-        .call(d3.axisBottom(x));
-        
-      svg.append('g')
-        .attr('transform', `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y));
-        
-      svg.selectAll('rect')
-        .data(vizData.data)
-        .enter()
-        .append('rect')
-        .attr('x', d => x(d.label))
-        .attr('y', d => y(d.value))
-        .attr('width', x.bandwidth())
-        .attr('height', d => height - margin.bottom - y(d.value))
-        .attr('fill', 'steelblue');
-    }
+    const x = d3.scaleBand()
+      .domain(vizData.data.map(d => d.label))
+      .range([margin.left, width - margin.right])
+      .padding(0.1);
+    
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(vizData.data, d => d.value)])
+      .nice()
+      .range([height - margin.bottom, margin.top]);
+    
+    // Add title
+    svg.append('text')
+      .attr('x', width / 2)
+      .attr('y', margin.top / 2)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '16px')
+      .text(vizData.title);
+    
+    // Add bars
+    svg.selectAll('rect')
+      .data(vizData.data)
+      .join('rect')
+      .attr('x', d => x(d.label))
+      .attr('y', d => y(d.value))
+      .attr('width', x.bandwidth())
+      .attr('height', d => y(0) - y(d.value))
+      .attr('fill', 'steelblue');
+    
+    // Add axes
+    svg.append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x))
+      .append('text')
+      .attr('x', width / 2)
+      .attr('y', 40)
+      .attr('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .text(vizData.xAxis);
+    
+    svg.append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y))
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', -40)
+      .attr('x', -(height / 2))
+      .attr('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .text(vizData.yAxis);
+    
+    addMessage(container.outerHTML, false, MessageTypes.DATA_VIZ);
+  } catch (error) {
+    console.error('Visualization error:', error);
+    addMessage("Sorry, there was an error generating the visualization.", false);
+  }
+}
     
     addMessage(vizContainer.outerHTML, false, MessageTypes.DATA_VIZ);
   } catch (error) {
