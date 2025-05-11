@@ -304,6 +304,45 @@ function resetChat() {
   initializeChat();
 }
 
+// Text selection handling
+let selectionPopup = null;
+
+document.addEventListener('selectionchange', () => {
+  const selection = window.getSelection();
+  const selectedText = selection.toString().trim();
+  
+  if (selectionPopup) {
+    selectionPopup.remove();
+    selectionPopup = null;
+  }
+  
+  if (selectedText && messagesContainer.contains(selection.anchorNode)) {
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    
+    selectionPopup = document.createElement('div');
+    selectionPopup.className = 'selection-popup';
+    selectionPopup.innerHTML = `
+      <button onclick="useSelectedText('${selectedText.replace(/'/g, "\\'")}')" class="icon-button">
+        <i class="fas fa-paste"></i>
+      </button>
+    `;
+    
+    selectionPopup.style.top = `${rect.bottom + window.scrollY + 10}px`;
+    selectionPopup.style.left = `${rect.left + window.scrollX}px`;
+    document.body.appendChild(selectionPopup);
+  }
+});
+
+function useSelectedText(text) {
+  userInput.value = text;
+  userInput.focus();
+  if (selectionPopup) {
+    selectionPopup.remove();
+    selectionPopup = null;
+  }
+}
+
 userInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     sendMessage();
