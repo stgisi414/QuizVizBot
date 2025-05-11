@@ -58,10 +58,64 @@ function displayMessages() {
   chatHistory.forEach(msg => {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${msg.isUser ? 'user-message' : 'bot-message'}`;
-    messageDiv.textContent = msg.text;
+    
+    if (msg.type === 'quiz') {
+      const quizData = JSON.parse(msg.text);
+      messageDiv.innerHTML = `
+        <div>${quizData.question}</div>
+        <div class="quiz-options">
+          ${quizData.options.map((option, index) => `
+            <div class="quiz-option" onclick="checkAnswer(${index}, ${quizData.correct}, this)">
+              ${option}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      messageDiv.textContent = msg.text;
+    }
+    
     messagesContainer.appendChild(messageDiv);
   });
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function checkAnswer(selected, correct, element) {
+  const options = element.parentElement.children;
+  Array.from(options).forEach(opt => opt.onclick = null);
+  
+  if (selected === correct) {
+    element.classList.add('correct');
+    addMessage("Correct! Well done!", false);
+  } else {
+    element.classList.add('incorrect');
+    options[correct].classList.add('correct');
+    addMessage("Incorrect. The correct answer is highlighted.", false);
+  }
+}
+
+async function requestVisualization() {
+  const botResponse = await getBotResponse("Create a D3.js visualization for the current topic", false);
+  addMessage(botResponse, false);
+}
+
+async function requestQuiz() {
+  const botResponse = await getBotResponse("Generate a quiz question for the current topic", false);
+  try {
+    const quizData = JSON.parse(botResponse);
+    addMessage(JSON.stringify(quizData), false, 'quiz');
+  } catch (error) {
+    addMessage("Sorry, there was an error generating the quiz.", false);
+  }
+}
+
+function addMessage(message, isUser, type = 'text') {
+  chatHistory.push({ text: message, isUser, type });
+  if (chatHistory.length > 10) {
+    chatHistory.shift();
+  }
+  localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+  displayMessages();
 }
 
 // Initialize chat with welcome message
