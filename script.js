@@ -5,16 +5,53 @@ const userInput = document.getElementById('user-input');
 
 let chatHistory = [];
 let currentStep = 0;
+let isOnboardingComplete = false;
+let courseFramework = null;
+
+const MessageTypes = {
+  ONBOARDING: 'onboarding',
+  INSTRUCTIONAL: 'instructional',
+  DATA_VIZ: 'd3_visualization',
+  QUIZ: 'quiz'
+};
 
 const surveyFlow = {
+  currentStep: 0,
   steps: [
     { type: "name", required: true },
     { type: "interests", required: true },
     { type: "goals", required: true },
     { type: "learning_style", required: true },
-    { type: "open", required: false }
+    { type: "summary", required: true }
   ]
 };
+
+function determineMessageType(message) {
+  if (!isOnboardingComplete) return MessageTypes.ONBOARDING;
+  // Add logic to determine message type based on content/context
+  if (message.toLowerCase().includes('quiz')) return MessageTypes.QUIZ;
+  if (message.toLowerCase().includes('visualize')) return MessageTypes.DATA_VIZ;
+  return MessageTypes.INSTRUCTIONAL;
+}
+
+function generateCourseFramework(chatHistory) {
+  const framework = {
+    studentName: '',
+    interests: [],
+    goals: [],
+    learningStyle: '',
+    recommendedTopics: [],
+    difficulty: 'intermediate'
+  };
+  
+  // Extract information from chat history
+  chatHistory.forEach(msg => {
+    if (!msg.isUser) return;
+    // Add logic to populate framework based on chat responses
+  });
+  
+  return framework;
+}
 
 function displayMessages() {
   messagesContainer.innerHTML = '';
@@ -49,21 +86,50 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
     `${msg.isUser ? 'User' : 'Assistant'}: ${msg.text}`
   ).join('\n');
 
-  const currentStep = surveyFlow.steps[chatHistory.filter(msg => !msg.isUser).length] || { type: "open" };
+  const messageType = determineMessageType(userMessage);
+  const currentStep = surveyFlow.steps[surveyFlow.currentStep] || { type: "open" };
   
-  const promptTemplate = isFirstMessage ? 
+  let promptTemplate = '';
+  
+  if (messageType === MessageTypes.ONBOARDING) {
+    if (isFirstMessage) {
+      promptTemplate = 
     `You are an educational AI assistant conducting a personalized learning journey. Provide a warm, engaging welcome message that introduces yourself and asks for the user's name. Keep it concise and friendly.` :
-    `You are an educational AI assistant guiding a learning journey.
+    `You are an educational AI assistant conducting an onboarding assessment.
     Current step type: ${currentStep.type}
     Previous conversation: ${contextMessages}
     User message: ${userMessage}
     
-    Based on the current step type (${currentStep.type}), provide a natural, encouraging response and guide the conversation according to these rules:
-    - If step is "name": Acknowledge their name and ask about their interests
-    - If step is "interests": Explore their mentioned interests and ask about their learning goals
-    - If step is "goals": Discuss their goals and ask about their preferred learning style
-    - If step is "learning_style": Acknowledge their style and open the conversation for any questions
-    - If step is "open": Engage in open discussion while maintaining educational focus
+    Based on the current step (${currentStep.type}), provide a natural response following these rules:
+    - If step is "name": Extract their name and ask about specific interests in technology and learning
+    - If step is "interests": Note their interests and ask about specific learning goals
+    - If step is "goals": Document their goals and ask about preferred learning style (visual, practical, theoretical)
+    - If step is "learning_style": Note their style and prepare to summarize
+    - If step is "summary": Provide a summary of their profile and indicate onboarding is complete
+    
+    If this is the summary step, also analyze the conversation to suggest 3-5 specific topics to learn.`;
+  } else if (messageType === MessageTypes.INSTRUCTIONAL) {
+    promptTemplate = `You are an educational AI assistant providing instructional guidance.
+    Course Framework: ${JSON.stringify(courseFramework)}
+    Previous conversation: ${contextMessages}
+    User message: ${userMessage}
+    
+    Provide focused educational guidance based on their course framework and current topic.`;
+  } else if (messageType === MessageTypes.QUIZ) {
+    promptTemplate = `You are an educational AI assistant administering a quiz.
+    Course Framework: ${JSON.stringify(courseFramework)}
+    Previous conversation: ${contextMessages}
+    User message: ${userMessage}
+    
+    Provide a multiple-choice question related to their current topic with 4 options.`;
+  } else {
+    promptTemplate = `You are an educational AI assistant providing data visualization guidance.
+    Course Framework: ${JSON.stringify(courseFramework)}
+    Previous conversation: ${contextMessages}
+    User message: ${userMessage}
+    
+    Provide guidance on visualizing the discussed concept using D3.js.`;
+  }
     
     Keep responses concise, friendly, and focused on education.`;
   try {
@@ -79,7 +145,19 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
       })
     });
     const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
+    const botResponse = data.candidates[0].content.parts[0].text;
+    
+    if (messageType === MessageTypes.ONBOARDING && currentStep.type === "summary") {
+      isOnboardingComplete = true;
+      courseFramework = generateCourseFramework(chatHistory);
+      localStorage.setItem('courseFramework', JSON.stringify(courseFramework));
+    }
+    
+    if (messageType === MessageTypes.ONBOARDING) {
+      surveyFlow.currentStep++;
+    }
+    
+    return botResponse;
   } catch (error) {
     console.error('Error:', error);
     return 'Sorry, I encountered an error. Please try again.';
