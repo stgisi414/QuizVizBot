@@ -92,10 +92,9 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
   let promptTemplate = '';
   
   if (messageType === MessageTypes.ONBOARDING) {
-    if (isFirstMessage) {
-      promptTemplate = 
-    `You are an educational AI assistant conducting a personalized learning journey. Provide a warm, engaging welcome message that introduces yourself and asks for the user's name. Keep it concise and friendly.` :
-    `You are an educational AI assistant conducting an onboarding assessment.
+    promptTemplate = isFirstMessage ? 
+      `You are an educational AI assistant conducting a personalized learning journey. Provide a warm, engaging welcome message that introduces yourself and asks for the user's name. Keep it concise and friendly.` :
+      `You are an educational AI assistant conducting an onboarding assessment.
     Current step type: ${currentStep.type}
     Previous conversation: ${contextMessages}
     User message: ${userMessage}
@@ -131,8 +130,7 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
     Provide guidance on visualizing the discussed concept using D3.js.`;
   }
     
-    Keep responses concise, friendly, and focused on education.`;
-  try {
+    try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${API_KEY}`, {
       method: 'POST',
       headers: {
