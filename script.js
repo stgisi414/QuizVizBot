@@ -190,7 +190,8 @@ function addMessage(message, isUser, type = 'text') {
 
 // Initialize chat with welcome message
 async function initializeChat() {
-  const welcomeMessage = await getBotResponse("", true);
+  const date = new Date().toLocaleString();
+  const welcomeMessage = await getBotResponse(`Current date and time: ${date}`, true);
   addMessage(welcomeMessage, false);
 }
 
@@ -217,7 +218,7 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
   
   if (messageType === MessageTypes.ONBOARDING) {
     promptTemplate = isFirstMessage ? 
-      `You are an educational AI assistant conducting a personalized learning journey. Provide a warm, engaging welcome message that introduces yourself and asks for the user's name. Keep it concise and friendly.` :
+      `You are an educational AI assistant conducting a personalized learning journey. Using the current date and time (${userMessage}), provide a warm, engaging welcome message that introduces yourself and asks for the user's name. Include a time-appropriate greeting (good morning/afternoon/evening). Keep it concise and friendly.` :
       `You are an educational AI assistant conducting an onboarding assessment.
     Current step type: ${currentStep.type}
     Previous conversation: ${contextMessages}
