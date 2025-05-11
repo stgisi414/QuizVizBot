@@ -32,9 +32,26 @@
 }
 
 .input-area {
-  display: flex;
   padding: 20px;
   border-top: 1px solid #ccc;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.message-input {
+  display: flex;
+}
+
+.secondary-btn {
+  background: #757575;
+}
+
+.secondary-btn:hover {
+  background: #616161;
 }
 
 #user-input {

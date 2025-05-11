@@ -63,6 +63,20 @@ async function sendMessage() {
   addMessage(botResponse, false);
 }
 
+function clearChat() {
+  chatHistory = [];
+  localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+  messagesContainer.innerHTML = '';
+}
+
+function refreshChat() {
+  messagesContainer.innerHTML = '';
+  chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+  chatHistory.forEach(msg => {
+    addMessage(msg.text, msg.isUser);
+  });
+}
+
 userInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
     sendMessage();
