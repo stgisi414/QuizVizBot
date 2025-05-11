@@ -76,7 +76,7 @@ function displayMessages() {
       messageContent.textContent = msg.text;
       messageDiv.appendChild(messageContent);
       
-      if (!msg.isUser && messageType === MessageTypes.INSTRUCTIONAL) {
+      if (!msg.isUser && msg.type === MessageTypes.INSTRUCTIONAL) {
         const actionButtons = document.createElement('div');
         actionButtons.className = 'message-actions';
         actionButtons.innerHTML = `
@@ -138,8 +138,8 @@ async function initializeChat() {
 
 initializeChat();
 
-function addMessage(message, isUser) {
-  chatHistory.push({ text: message, isUser });
+function addMessage(message, isUser, type = MessageTypes.INSTRUCTIONAL) {
+  chatHistory.push({ text: message, isUser, type });
   if (chatHistory.length > 10) {
     chatHistory.shift();
   }
