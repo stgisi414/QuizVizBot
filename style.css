@@ -31,6 +31,13 @@
   margin-right: 20%;
 }
 
+.bot-message svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+}
+
 .input-area {
   padding: 20px;
   border-top: 1px solid #ccc;

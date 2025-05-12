@@ -90,7 +90,12 @@ function displayMessages() {
       `;
     } else {
       const messageContent = document.createElement('div');
-      messageContent.textContent = msg.text;
+      // Sanitize and render HTML content for bot messages only
+      if (!msg.isUser) {
+        messageContent.innerHTML = msg.text;
+      } else {
+        messageContent.textContent = msg.text;
+      }
       messageDiv.appendChild(messageContent);
 
       if (!msg.isUser && msg.type === MessageTypes.INSTRUCTIONAL && isOnboardingComplete) {
