@@ -3,10 +3,26 @@ const API_KEY = "AIzaSyDIFeql6HUpkZ8JJlr_kuN0WDFHUyOhijA";
 const messagesContainer = document.getElementById('chat-messages');
 const userInput = document.getElementById('user-input');
 
+const userProfile = {
+  name: '',
+  interests: [],
+  goals: [],
+  learningStyle: '',
+  onboardingComplete: false,
+  lastActive: null
+};
+
+// Load saved profile from localStorage
+const savedProfile = localStorage.getItem('userProfile');
+if (savedProfile) {
+  Object.assign(userProfile, JSON.parse(savedProfile));
+}
+
 let chatHistory = [];
-let currentStep = 0;
-let isOnboardingComplete = false;
-let courseFramework = null;
+let currentStep = savedProfile ? surveyFlow.steps.length : 0;
+let isOnboardingComplete = userProfile.onboardingComplete;
+let courseFramework = localStorage.getItem('courseFramework') ? 
+  JSON.parse(localStorage.getItem('courseFramework')) : null;
 
 const MessageTypes = {
   ONBOARDING: 'onboarding',
@@ -283,10 +299,25 @@ async function getBotResponse(userMessage, isFirstMessage = false) {
     const data = await response.json();
     const botResponse = data.candidates[0].content.parts[0].text;
     
-    if (messageType === MessageTypes.ONBOARDING && currentStep.type === "summary") {
-      isOnboardingComplete = true;
-      courseFramework = generateCourseFramework(chatHistory);
-      localStorage.setItem('courseFramework', JSON.stringify(courseFramework));
+    if (messageType === MessageTypes.ONBOARDING) {
+      // Update user profile based on current step
+      if (currentStep.type === "name") {
+        userProfile.name = userMessage;
+      } else if (currentStep.type === "interests") {
+        userProfile.interests = userMessage.split(',').map(i => i.trim());
+      } else if (currentStep.type === "goals") {
+        userProfile.goals = userMessage.split(',').map(g => g.trim());
+      } else if (currentStep.type === "learning_style") {
+        userProfile.learningStyle = userMessage;
+      } else if (currentStep.type === "summary") {
+        userProfile.onboardingComplete = true;
+        isOnboardingComplete = true;
+        courseFramework = generateCourseFramework(chatHistory);
+        localStorage.setItem('courseFramework', JSON.stringify(courseFramework));
+      }
+      
+      userProfile.lastActive = new Date().toISOString();
+      localStorage.setItem('userProfile', JSON.stringify(userProfile));
     }
     
     if (messageType === MessageTypes.ONBOARDING) {
@@ -311,9 +342,23 @@ async function sendMessage() {
   addMessage(botResponse, false);
 }
 
-function resetChat() {
+function resetChat(clearProfile = false) {
+  if (clearProfile) {
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('courseFramework');
+    Object.assign(userProfile, {
+      name: '',
+      interests: [],
+      goals: [],
+      learningStyle: '',
+      onboardingComplete: false,
+      lastActive: null
+    });
+    isOnboardingComplete = false;
+    courseFramework = null;
+    currentStep = 0;
+  }
   chatHistory = [];
-  currentStep = 0;
   messagesContainer.innerHTML = '';
   initializeChat();
 }
