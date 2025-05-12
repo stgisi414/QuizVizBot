@@ -124,21 +124,34 @@ function checkAnswer(selected, correct, element) {
 }
 
 async function requestVisualization() {
-  const promptTemplate = `Generate visualization data in this exact JSON format:
-  {
-    "type": "bar",
-    "title": "Sample Data",
-    "data": [
-      {"label": "A", "value": 10},
-      {"label": "B", "value": 20}
-    ],
-    "xAxis": "Categories",
-    "yAxis": "Values"
-  }`;
+  const promptTemplate = `You must respond with ONLY valid JSON data in this exact format, no other text:
+{
+  "type": "bar",
+  "title": "Sample Data",
+  "data": [
+    {"label": "A", "value": 10},
+    {"label": "B", "value": 20}
+  ],
+  "xAxis": "Categories",
+  "yAxis": "Values"
+}`;
 
   const botResponse = await getBotResponse(promptTemplate, false);
   try {
-    const vizData = JSON.parse(botResponse);
+    // Extract JSON by finding first { and last }
+    const jsonStart = botResponse.indexOf('{');
+    const jsonEnd = botResponse.lastIndexOf('}') + 1;
+    if (jsonStart === -1 || jsonEnd === 0) {
+      throw new Error('Invalid JSON structure');
+    }
+    const jsonStr = botResponse.substring(jsonStart, jsonEnd);
+    
+    // Parse and validate structure
+    const vizData = JSON.parse(jsonStr);
+    if (!vizData.type || !vizData.title || !Array.isArray(vizData.data) || 
+        !vizData.data.every(d => d.label && typeof d.value === 'number')) {
+      throw new Error('Invalid visualization data structure');
+    }
     const container = document.createElement('div');
     container.className = 'visualization-container';
 
